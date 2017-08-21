@@ -1,0 +1,16 @@
+{
+  "name": "ethminer-monitor",
+  "title": "monitoring app for ethminer",
+  "description": "",
+  "version": "0.1.0",
+  "author": {
+    "name": "Vaclav Klecanda <vencax77@gmail.com>"
+  },
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "nodemailer": "^2.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
