@@ -1,6 +1,7 @@
 const readline = require('readline')
 const { spawn } = require('child_process')
 const path = require('path')
+const overclocking = require('./overclock')
 const submissionInterval = parseInt(process.env.SUBMISSION_INTERVAL) || 60
 
 const state = {}
@@ -41,12 +42,21 @@ exports.run = (sendError) => {
           sendError(JSON.stringify(state))
           console.log('killing')
           miningProcess.kill()
+          overclocking.overclock({  // reset freqs
+            core: 0,
+            mem: 0
+          })
           _run()
         }, submissionInterval * 1000)
       }
     })
   }
 
+  overclocking.overclock({
+    core: process.env.OVERCLOCK_CORE,
+    mem: process.env.OVERCLOCK_MEM,
+    powerlimit: process.env.OVERCLOCK_POWERLIMIT
+  })
   _run()
 }
 
