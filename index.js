@@ -1,44 +1,56 @@
 const readline = require('readline')
+const { spawn } = require('child_process')
+const path = require('path')
 const submissionInterval = parseInt(process.env.SUBMISSION_INTERVAL) || 60
 
 const state = {}
 let tOut = null
-const buff = []
+let miningProcess = null
 
-module.exports = (transporter) => (client) => {
+exports.run = (sendError) => {
   //
-  function sendError () {
-    transporter.sendMail({
-      from: process.env.MONITOR_NAME || 'etherminermonitor@localhost',
-      to: process.env.ADMIN_EMAIL,
-      subject: 'MINER ERROR!!!',
-      text: 'MINER ERROR! \n' + buff.join('\n')
+  const pars = [
+    '-G',
+    '-F', process.env.POOLADDRESS,
+    '--farm-recheck', '2000',
+    '-v', '10'
+  ]
+  const cmd = `${pars.join(' ')}`
+  function _run () {
+    console.log('running: ' + cmd)
+    miningProcess = spawn(path.join(__dirname, 'ethminer'), pars)
+    miningProcess.on('error', (err) => {
+      console.log(err)
+    })
+    miningProcess.stdout.pipe(process.stdout)
+    miningProcess.stderr.pipe(process.stderr)
+    const rl = readline.createInterface(miningProcess.stderr)
+
+    rl.on('line', function (line) {
+      const match = line.match(/([0-9]{1,}.[0-9]{1,})MH\/s/)
+      if (match) {
+        state.speed = match[1]
+      }
+      if (line.indexOf('Submitted and accepted')) {
+        state.status = 'OK'
+        if (tOut) {
+          clearTimeout(tOut)
+        }
+        tOut = setTimeout(() => {
+          state.status = 'FAILED'
+          sendError(JSON.stringify(state))
+          console.log('killing')
+          miningProcess.kill()
+          _run()
+        }, submissionInterval * 1000)
+      }
     })
   }
 
-  function add3buff (line) {
-    buff.push(line)
-    if (buff.length > 100) {
-      buff.shift()
-    }
-  }
+  _run()
+}
 
-  var rl = readline.createInterface(client, client)
-
-  rl.on('line', function (line) {
-    add3buff(line)
-    // process.env.NODE_ENV.indexOf('production') >= 0 && console.log(line)
-    if (line.indexOf('Submitted and accepted')) {
-      state.status = 'OK'
-      if (tOut) {
-        clearTimeout(tOut)
-      }
-      tOut = setTimeout(() => {
-        state.status = 'FAILED'
-        sendError()
-        console.log('Switching to error mode')
-      }, submissionInterval * 1000)
-    }
-  })
-  //
+exports.statusHandler = (req, res, next) => {
+  res.json(state)
+  next()
 }
