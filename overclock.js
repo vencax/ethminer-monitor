@@ -4,6 +4,7 @@ const numGPUS = Number(process.env.GPUCOUNT) || 1
 
 function runSettingsApp (cmd, done) {
   const _cmd = settingsApp + ' -a ' + cmd
+  console.log(cmd)
   exec(_cmd, (error, stdout, stderr) => {
     if (error) {
       return console.log(error)
@@ -31,6 +32,12 @@ exports.overclock = (opts) => {
     if (opts.mem) {
       for (let i = 0; i < numGPUS; i++) {
         runSettingsApp(`[gpu:${i}]/GPUMemoryTransferRateOffset[3]=${opts.mem}`)
+      }
+    }
+    if (opts.fan) {
+      for (let i = 0; i < numGPUS; i++) {
+        runSettingsApp(`[gpu:${i}]/GPUFanControlState=1`)
+        runSettingsApp(`[fan:${i}]/GPUTargetFanSpeed=${opts.fan}`)
       }
     }
   })

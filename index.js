@@ -26,28 +26,28 @@ exports.run = (sendError) => {
     miningProcess.stdout.pipe(process.stdout)
     miningProcess.stderr.pipe(process.stderr)
     const rl = readline.createInterface(miningProcess.stderr)
+    let wasPositive = false
 
     rl.on('line', function (line) {
       const match = line.match(/([0-9]{1,}.[0-9]{1,})MH\/s/)
       if (match) {
-        state.speed = match[1]
-      }
-      if (line.indexOf('Submitted and accepted')) {
-        state.status = 'OK'
-        if (tOut) {
-          clearTimeout(tOut)
+        state.speed = parseFloat(match[1])
+        console.log(JSON.stringify(state))
+        if (state.speed > 0.1) {
+          wasPositive = true
+          state.status = 'OK'
         }
-        tOut = setTimeout(() => {
+        if (state.speed < 0.1 && wasPositive) {
           state.status = 'FAILED'
-          sendError(JSON.stringify(state))
-          console.log('killing')
+          console.log('killing mining process...')
           miningProcess.kill()
           overclocking.overclock({  // reset freqs
             core: 0,
             mem: 0
           })
-          _run()
-        }, submissionInterval * 1000)
+          setTimeout(() => _run(), 10000) // wait 10s
+          sendError(JSON.stringify(state))
+        }
       }
     })
   }
@@ -55,7 +55,8 @@ exports.run = (sendError) => {
   overclocking.overclock({
     core: process.env.OVERCLOCK_CORE,
     mem: process.env.OVERCLOCK_MEM,
-    powerlimit: process.env.OVERCLOCK_POWERLIMIT
+    powerlimit: process.env.OVERCLOCK_POWERLIMIT,
+    fan: process.env.OVERCLOCK_FAN_PERCENT
   })
   _run()
 }

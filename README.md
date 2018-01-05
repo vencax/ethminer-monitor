@@ -10,3 +10,7 @@ Config is performed through few environment variables with obvious meaning:
 
 - SMTP_CONN: connection for email sending (e.g. smtps://gandalf%40gmail.com:secretpwd@smtp.gmail.com)
 - ADMIN_EMAIL: email where to send error notifications
+- OVERCLOCK_CORE: aditional megahertz (e.g. 500 = 500 more Mhz to the core freq)
+- OVERCLOCK_MEM: similar to OVERCLOCK_CORE
+- OVERCLOCK_POWERLIMIT: in watts
+- OVERCLOCK_FAN_PERCENT: percent of fan rpms
