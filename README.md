@@ -14,3 +14,5 @@ Config is performed through few environment variables with obvious meaning:
 - OVERCLOCK_MEM: similar to OVERCLOCK_CORE
 - OVERCLOCK_POWERLIMIT: in watts
 - OVERCLOCK_FAN_PERCENT: percent of fan rpms
+- FARMRECHECK: default 2000
+- BACKUP_POOLADDRESS: optional
