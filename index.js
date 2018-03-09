@@ -20,7 +20,11 @@ exports.run = (sendError) => {
   if (process.env.BACKUP_POOLADDRESS) {
     pars.push('-FS')
     pars.push(process.env.BACKUP_POOLADDRESS)
-  }  
+  }
+  if (process.env.CREDENTIALS) {
+    pars.push('-O')
+    pars.push(process.env.CREDENTIALS)
+  }
   const cmd = `${pars.join(' ')}`
   function _run () {
     console.log('running: ' + cmd)
