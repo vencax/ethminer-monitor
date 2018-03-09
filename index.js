@@ -10,12 +10,17 @@ let miningProcess = null
 
 exports.run = (sendError) => {
   //
+  const farmRecheck = process.env.FARMRECHECK || 2000
   const pars = [
     '-G',
     '-F', process.env.POOLADDRESS,
-    '--farm-recheck', '2000',
+    '--farm-recheck', farmRecheck,
     '-v', '10'
   ]
+  if (process.env.BACKUP_POOLADDRESS) {
+    pars.push('-FS')
+    pars.push(process.env.BACKUP_POOLADDRESS)
+  }  
   const cmd = `${pars.join(' ')}`
   function _run () {
     console.log('running: ' + cmd)
