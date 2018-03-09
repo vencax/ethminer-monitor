@@ -25,7 +25,7 @@ exports.run = (sendError) => {
     pars.push('-O')
     pars.push(process.env.CREDENTIALS)
   }
-  const cmd = `${pars.join(' ')}`
+  const cmd = process.env.MINER_PARS ? process.env.MINER_PARS : `${pars.join(' ')}`
   function _run () {
     console.log('running: ' + cmd)
     miningProcess = spawn(path.join(__dirname, 'ethminer'), pars)
