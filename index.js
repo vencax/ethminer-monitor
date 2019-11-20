@@ -8,10 +8,19 @@ const state = {}
 let tOut = null
 let miningProcess = null
 
+function _overClock () {
+  overclocking.overclock({
+    core: process.env.OVERCLOCK_CORE,
+    mem: process.env.OVERCLOCK_MEM,
+    powerlimit: process.env.OVERCLOCK_POWERLIMIT,
+    fan: process.env.OVERCLOCK_FAN_PERCENT
+  })
+}
+
 exports.run = (sendError) => {
   //
   const farmRecheck = process.env.FARMRECHECK || 2000
-  const pars = [
+  let pars = [
     '-G',
     '-F', process.env.POOLADDRESS,
     '--farm-recheck', farmRecheck,
@@ -25,7 +34,9 @@ exports.run = (sendError) => {
     pars.push('-O')
     pars.push(process.env.CREDENTIALS)
   }
-  const cmd = process.env.MINER_PARS ? process.env.MINER_PARS : `${pars.join(' ')}`
+  pars = process.env.MINER_PARS ? process.env.MINER_PARS.split(' ') : pars
+  const cmd = `${pars.join(' ')}`
+
   function _run () {
     console.log('running: ' + cmd)
     miningProcess = spawn(path.join(__dirname, 'ethminer'), pars)
@@ -35,7 +46,7 @@ exports.run = (sendError) => {
     miningProcess.stdout.pipe(process.stdout)
     miningProcess.stderr.pipe(process.stderr)
     const rl = readline.createInterface(miningProcess.stderr)
-    let wasPositive = false
+    let n = 0
 
     rl.on('line', function (line) {
       const match = line.match(/([0-9]{1,}.[0-9]{1,})MH\/s/)
@@ -43,17 +54,15 @@ exports.run = (sendError) => {
         state.speed = parseFloat(match[1])
         console.log(JSON.stringify(state))
         if (state.speed > 0.1) {
-          wasPositive = true
+          n = 0
           state.status = 'OK'
+        } else {
+          n += 1
         }
-        if (state.speed < 0.1 && wasPositive) {
+        if (state.speed < 0.1 && n > 30) {
           state.status = 'FAILED'
           console.log('killing mining process...')
           miningProcess.kill()
-          overclocking.overclock({  // reset freqs
-            core: 0,
-            mem: 0
-          })
           setTimeout(() => _run(), 10000) // wait 10s
           sendError(JSON.stringify(state))
         }
@@ -61,12 +70,7 @@ exports.run = (sendError) => {
     })
   }
 
-  overclocking.overclock({
-    core: process.env.OVERCLOCK_CORE,
-    mem: process.env.OVERCLOCK_MEM,
-    powerlimit: process.env.OVERCLOCK_POWERLIMIT,
-    fan: process.env.OVERCLOCK_FAN_PERCENT
-  })
+  setTimeout(() => _overClock(), 5000)
   _run()
 }
 
